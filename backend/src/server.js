@@ -12,7 +12,7 @@ import messageRoutes from "./routes/message.route.js";
 const __dirname = path.resolve();
 const PORT = ENV.PORT || 3000;
 
-// ---- CORS CONFIG ----
+// --- CORS ---
 const allowedOrigins = [
   "http://localhost:5173",
   "https://chatify-app-omega.vercel.app",
@@ -22,24 +22,31 @@ app.use(express.json({ limit: "5mb" }));
 app.use(
   cors({
     origin(origin, callback) {
-      // allow REST tools / same-origin calls with no Origin header
-      if (!origin) return callback(null, true);
+      if (!origin) return callback(null, true); // allow Postman etc.
 
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
       return callback(new Error("Not allowed by CORS"));
     },
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
+// handle OPTIONS preflight explicitly
+app.options("*", cors({
+  origin: allowedOrigins,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+}));
+
 app.use(cookieParser());
 
-// ---- ROUTES ----
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
-// ---- STATIC FILES IN PRODUCTION ----
 if (ENV.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
@@ -48,7 +55,6 @@ if (ENV.NODE_ENV === "production") {
   });
 }
 
-// ---- START SERVER ----
 server.listen(PORT, () => {
   console.log("Server running on port: " + PORT);
   connectDB();
