@@ -47,25 +47,21 @@ export const useAuthStore = create((set, get) => ({
   },
 
   login: async (data) => {
-    set({ isLoggingIn: true });
     try {
-      const res = await axiosInstance.post("/auth/login", data);
-      
-      // ✅ FIXED - Save token to localStorage
-      if (res.data.token) {
-        localStorage.setItem('token', res.data.token);
-      }
-      
-      set({ authUser: res.data });
-      toast.success("Logged in successfully");
-      get().connectSocket();
+        const res = await axiosInstance.post("/auth/login", data);
+        
+        // Save token to localStorage
+        if (res.data.token) {
+            localStorage.setItem("token", res.data.token);
+        }
+        
+        set({ authUser: res.data });
+        toast.success("Logged in successfully");
+        get().connectSocket();
     } catch (error) {
-      toast.error(error.response.data.message);
-    } finally {
-      set({ isLoggingIn: false });
+        toast.error(error.response.data.message);
     }
-  },
-
+},
   logout: async () => {
     try {
       await axiosInstance.post("/auth/logout");
