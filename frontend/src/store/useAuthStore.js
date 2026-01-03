@@ -30,8 +30,13 @@ export const useAuthStore = create((set, get) => ({
     set({ isSigningUp: true });
     try {
       const res = await axiosInstance.post("/auth/signup", data);
+      
+      // ✅ FIXED - Save token to localStorage
+      if (res.data.token) {
+        localStorage.setItem('token', res.data.token);
+      }
+      
       set({ authUser: res.data });
-
       toast.success("Account created successfully!");
       get().connectSocket();
     } catch (error) {
@@ -45,10 +50,14 @@ export const useAuthStore = create((set, get) => ({
     set({ isLoggingIn: true });
     try {
       const res = await axiosInstance.post("/auth/login", data);
+      
+      // ✅ FIXED - Save token to localStorage
+      if (res.data.token) {
+        localStorage.setItem('token', res.data.token);
+      }
+      
       set({ authUser: res.data });
-
       toast.success("Logged in successfully");
-
       get().connectSocket();
     } catch (error) {
       toast.error(error.response.data.message);
@@ -60,6 +69,10 @@ export const useAuthStore = create((set, get) => ({
   logout: async () => {
     try {
       await axiosInstance.post("/auth/logout");
+      
+      // ✅ FIXED - Remove token from localStorage
+      localStorage.removeItem('token');
+      
       set({ authUser: null });
       toast.success("Logged out successfully");
       get().disconnectSocket();
@@ -85,14 +98,12 @@ export const useAuthStore = create((set, get) => ({
     if (!authUser || get().socket?.connected) return;
 
     const socket = io(BASE_URL, {
-      withCredentials: true, // this ensures cookies are sent with the connection
+      withCredentials: true,
     });
 
     socket.connect();
-
     set({ socket });
 
-    // listen for online users event
     socket.on("getOnlineUsers", (userIds) => {
       set({ onlineUsers: userIds });
     });
